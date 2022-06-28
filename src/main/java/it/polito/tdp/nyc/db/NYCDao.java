@@ -6,12 +6,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.javadocmd.simplelatlng.LatLng;
 import com.javadocmd.simplelatlng.LatLngTool;
 import com.javadocmd.simplelatlng.util.LengthUnit;
 
 import it.polito.tdp.nyc.model.Adiacenza;
+import it.polito.tdp.nyc.model.City;
 import it.polito.tdp.nyc.model.Hotspot;
 
 public class NYCDao {
@@ -65,12 +67,14 @@ public class NYCDao {
 
 		return result;
 	}
-	
-	public List<String> getVertici(String provider) {
-		String sql = "SELECT DISTINCT n.City AS city "
-				+ "FROM nyc_wifi_hotspot_locations n "
-				+ "WHERE n.Provider = ?";
-		List<String> result = new ArrayList<>();
+	//Ogni city ha nome + posizione + numHotspost
+	public void getVertici(String provider, Map<String, City> idMap) {
+		String sql = "SELECT DISTINCT City AS nome, AVG(Latitude) AS Lat, AVG(Longitude) AS Lng, COUNT(*) AS numHotspot "
+				+ "FROM nyc_wifi_hotspot_locations "
+				+ "WHERE Provider= ? "
+				+ "GROUP BY City "
+				+ "ORDER BY City";
+		
 		try {
 			Connection conn = DBConnect.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
@@ -78,7 +82,10 @@ public class NYCDao {
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				result.add(res.getString("city"));
+				if(!idMap.containsKey(res.getString("nome"))) {
+				LatLng posizione = new LatLng(res.getDouble("Lat"), res.getDouble("Lng"));
+				idMap.put(res.getString("nome"), new City(res.getString("nome"), posizione, res.getInt("numHotspot")));
+				}
 			}
 			
 			conn.close();
@@ -86,10 +93,9 @@ public class NYCDao {
 			e.printStackTrace();
 			throw new RuntimeException("SQL Error");
 		}
-		return result;
 	}
 	
-	public List<Adiacenza> getAdiacenze(String provider){
+	public List<Adiacenza> getAdiacenze(String provider, Map<String, City> idMap){
 		String sql = "SELECT DISTINCT n1.City AS city1, n2.City AS city2, AVG(n1.Latitude) AS lat1, AVG(n1.Longitude) AS long1, AVG(n2.Latitude) AS lat2, AVG(n2.Longitude) AS long2 "
 				+ "FROM nyc_wifi_hotspot_locations n1, nyc_wifi_hotspot_locations n2 "
 				+ "WHERE n1.City < n2.City "
@@ -103,10 +109,18 @@ public class NYCDao {
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				LatLng posizione1 = new LatLng(res.getDouble("lat1"), res.getDouble("long1"));
-				LatLng posizione2 = new LatLng(res.getDouble("lat2"), res.getDouble("long2"));
-				double peso = LatLngTool.distance(posizione1, posizione2, LengthUnit.KILOMETER);
-				result.add(new Adiacenza(res.getString("city1"), res.getString("city2"), peso));
+				if(idMap.containsKey(res.getString("city1")) && idMap.containsKey(res.getString("city2"))) {
+					
+					LatLng posizione1 = idMap.get(res.getString("city1")).getPosizione();
+					LatLng posizione2 = idMap.get(res.getString("city2")).getPosizione();
+					
+					double peso = LatLngTool.distance(posizione1, posizione2, LengthUnit.KILOMETER);
+					
+					result.add(new Adiacenza(idMap.get(res.getString("city1")), idMap.get(res.getString("city2")), peso));
+							
+				}
+				
+				
 			}
 			
 			conn.close();

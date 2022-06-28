@@ -3,7 +3,9 @@ package it.polito.tdp.nyc.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -15,9 +17,11 @@ import it.polito.tdp.nyc.db.NYCDao;
 public class Model {
 	
 	private NYCDao dao;
-	private Graph<String, DefaultWeightedEdge> grafo;
-	private List<String> vertici;
+	private Graph<City, DefaultWeightedEdge> grafo;
+	private List<City> vertici;
+	private Map<String, City> idMap;
 	
+	private Simulatore sim;
 	
 	public Model() {
 		super();
@@ -31,16 +35,19 @@ public class Model {
 	
 	public void creaGrafo(String provider) {
 		this.grafo = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+		this.idMap = new HashMap<>();
 		
+		this.dao.getVertici(provider, idMap);
 		
-		//Aggiungo i vertici
-		this.vertici = new ArrayList<>(this.dao.getVertici(provider)); 
-		Graphs.addAllVertices(this.grafo, vertici);
+		this.vertici= new ArrayList<>(idMap.values());
+		
+		//Aggiungo i vertici 
+		Graphs.addAllVertices(this.grafo, idMap.values());
 		
 		//Aggiungo gli archi
-		for(Adiacenza a: this.dao.getAdiacenze(provider)) {
-			if(this.grafo.containsVertex(a.getCity1()) && this.grafo.containsVertex(a.getCity2())) {
-				Graphs.addEdgeWithVertices(this.grafo, a.getCity1(), a.getCity2(), a.getPeso());
+		for(Adiacenza a: this.dao.getAdiacenze(provider, idMap)) {
+			if(this.grafo.containsVertex(a.getC1()) && this.grafo.containsVertex(a.getC2())) {
+				Graphs.addEdgeWithVertices(this.grafo, a.getC1(), a.getC2(), a.getPeso());
 			}
 		}
 
@@ -65,14 +72,14 @@ public class Model {
 			return true;
 	}
 	
-	public List<String> getVertici(){
+	public List<City> getVertici(){
 		return new ArrayList<>(this.grafo.vertexSet());
 	}
 	
-	public List<Vicino> getAdiacenti(String quartiere){
+	public List<Vicino> getAdiacenti(City quartiere){
 		List<Vicino> adiacenti = new ArrayList<>();
-		for(String q: Graphs.neighborListOf(this.grafo, quartiere)) {
-			adiacenti.add(new Vicino(q, this.grafo.getEdgeWeight(this.grafo.getEdge(q, quartiere))));
+		for(City c: Graphs.neighborListOf(this.grafo, quartiere)) {
+			adiacenti.add(new Vicino(c, this.grafo.getEdgeWeight(this.grafo.getEdge(c, quartiere))));
 		}
 		Collections.sort(adiacenti, new Comparator<Vicino>() {
 
@@ -84,5 +91,20 @@ public class Model {
 		});
 		
 		return adiacenti;
+	}
+	
+	public void doSimula(int N, City partenza) {
+		sim = new Simulatore(this.grafo, this.vertici);
+		sim.init(N, partenza);
+		sim.run();
+		
+	}
+	
+	public int getDurataTot() {
+		return sim.getDurataTot();
+	}
+
+	public List<Integer> getRevisionati() {
+		return sim.getRevisionati();
 	}
 }

@@ -2,31 +2,31 @@ package it.polito.tdp.nyc.model;
 
 public class Adiacenza {
 	
-	private String City1;
-	private String City2;
+	private City c1;
+	private City c2;
 	private double peso;
 	
-	public Adiacenza(String city1, String city2, double peso) {
+	public Adiacenza(City c1, City c2, double peso) {
 		super();
-		City1 = city1;
-		City2 = city2;
+		this.c1 = c1;
+		this.c2 = c2;
 		this.peso = peso;
 	}
 
-	public String getCity1() {
-		return City1;
+	public City getC1() {
+		return c1;
 	}
 
-	public void setCity1(String city1) {
-		City1 = city1;
+	public void setC1(City c1) {
+		this.c1 = c1;
 	}
 
-	public String getCity2() {
-		return City2;
+	public City getC2() {
+		return c2;
 	}
 
-	public void setCity2(String city2) {
-		City2 = city2;
+	public void setC2(City c2) {
+		this.c2 = c2;
 	}
 
 	public double getPeso() {

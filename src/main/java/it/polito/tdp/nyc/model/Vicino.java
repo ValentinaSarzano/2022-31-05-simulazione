@@ -1,20 +1,20 @@
 package it.polito.tdp.nyc.model;
 
 public class Vicino {
-	private String quartiere;
+	private City quartiere;
 	private Double distanza;
 	
-	public Vicino(String quartiere, Double distanza) {
+	public Vicino(City quartiere, Double distanza) {
 		super();
 		this.quartiere = quartiere;
 		this.distanza = distanza;
 	}
 
-	public String getQuartiere() {
+	public City getQuartiere() {
 		return quartiere;
 	}
 
-	public void setQuartiere(String quartiere) {
+	public void setQuartiere(City quartiere) {
 		this.quartiere = quartiere;
 	}
 
@@ -25,6 +25,7 @@ public class Vicino {
 	public void setDistanza(Double distanza) {
 		this.distanza = distanza;
 	}
+	
 	
 
 }

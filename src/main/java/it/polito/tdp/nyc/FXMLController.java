@@ -8,6 +8,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import it.polito.tdp.nyc.model.City;
 import it.polito.tdp.nyc.model.Model;
 import it.polito.tdp.nyc.model.Vicino;
 import javafx.collections.FXCollections;
@@ -44,7 +46,7 @@ public class FXMLController {
     private ComboBox<String> cmbProvider; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbQuartiere"
-    private ComboBox<String> cmbQuartiere; // Value injected by FXMLLoader
+    private ComboBox<City> cmbQuartiere; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtMemoria"
     private TextField txtMemoria; // Value injected by FXMLLoader
@@ -72,6 +74,7 @@ public class FXMLController {
     	cmbQuartiere.getItems().clear();
     	cmbQuartiere.getItems().addAll(this.model.getVertici());
         btnAdiacenti.setDisable(false);
+        
     	txtResult.appendText("Grafo creato!\n");
     	txtResult.appendText("#VERTICI: "+ this.model.nVertici()+"\n");
     	txtResult.appendText("#ARCHI: "+ this.model.nArchi());
@@ -81,10 +84,11 @@ public class FXMLController {
     @FXML
     void doQuartieriAdiacenti(ActionEvent event) {
     	txtResult.clear();
-    	String quartiere = cmbQuartiere.getValue();
+    	City quartiere = cmbQuartiere.getValue();
     	if(quartiere == null) {
     		txtResult.appendText("ERRORE: Selezionare prima un quartiere dal menu a tendina!\n");
     	}
+    	btnCreaLista.setDisable(false);
     	List<Vicino> adiacenti = new ArrayList<>(this.model.getAdiacenti(quartiere));
     	//Creo un ObservableList
     	tblQuartieri.setItems(FXCollections.observableArrayList(adiacenti));
@@ -92,6 +96,23 @@ public class FXMLController {
 
     @FXML
     void doSimula(ActionEvent event) {
+    	txtResult.clear();
+    	City quartiere = cmbQuartiere.getValue();
+    	if(quartiere == null) {
+    		txtResult.appendText("ERRORE: Selezionare prima un quartiere dal menu a tendina!\n");
+    	}
+    	int N = 0;
+    	try {
+    		N = Integer.parseInt(txtMemoria.getText());
+    	}catch(NumberFormatException e) {
+    		txtResult.appendText("ERRORE: Inserire un numero N intero!\n");
+    	}
+    	this.model.doSimula(N, quartiere);
+    	List<Integer> revisionati = new ArrayList<>(this.model.getRevisionati());
+    	for(Integer i: revisionati) {
+    		txtResult.appendText("Tecnico "+ revisionati.indexOf(i) + " - #Hotspot revisionati: " + i + "\n");
+    	}
+    	txtResult.appendText("Durata totale del processo: "+ this.model.getDurataTot());
 
     }
 
